@@ -15,6 +15,7 @@
 #include "base.h"
 #include "vars.h"
 #include "wifi.h"
+#include "ntp.h"
 #include "version.h"
 
 #define WCLOCK24H   1
@@ -53,34 +54,16 @@ static int                                          bgcolor_cnt;
 #define MAX_TIME_LEN                                5
 #define MAX_BRIGHTNESS_LEN                          2
 #define MAX_COLOR_VALUE_LEN                         2
-#define MAX_TEMP_CORR_LEN                           2
-#define MAX_MINUTE_INTERVAL_LEN                     2
-#define MAX_RAINBOW_DECELERATION_LEN                3
-#define MAX_RAW_VALUE_LEN                           5
-#define MAX_ANIMATION_DECELERATION_LEN              2
-#define MAX_COLOR_ANIMATION_DECELERATION_LEN        2
-#define MAX_AMBILIGHT_MODE_DECELERATION_LEN         2
 
 #define MAIN_HEADER_COLS                            2
-#define DATETIME_HEADER_COLS                        6
+#define DATETIME_HEADER_COLS                        7
+#define TZ_HEADER_COLS                              7
 #define TICKER_HEADER_COLS                          2
 #define NETWORK_HEADER_COLS                         3
-#define WEATHER_HEADER_COLS                         3
 #define DISPLAY_HEADER_COLS                         3
-#define ANIMATION_HEADER_COLS                       3
-#define ANIMATION_DECELERATION_HEADER_COLS          5
-#define COLOR_ANIMATION_DECELERATION_HEADER_COLS    4
-#define AMBILIGHT_MODE_DECELERATION_HEADER_COLS     4
 #define TIMERS_HEADER_COLS                          8
 
 String  sHTTP_Response   = "";
-
-/*-------------------------------------------------------------------------------------------------------------------------------------------
- * values
- *-------------------------------------------------------------------------------------------------------------------------------------------
- */
-
-#define MAX_BRIGHTNESS                              15
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------
  * display flags:
@@ -105,8 +88,6 @@ String  sHTTP_Response   = "";
 #define ESP8266_MAX_TIME_SIZE                       16
 
 static struct tm tm;
-
-#define MAX_COLOR_STEPS                             64
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------
  * flush output buffer
@@ -775,7 +756,7 @@ http_menu (void)
     menu_entry ("", "Main");
     menu_entry ("network", "Network");
     menu_entry ("display", "Display");
-    menu_entry ("timers", "Timers");
+    //menu_entry ("timers", "Timers");
     http_send("</ul></div>");
     http_send("</div></nav>");
     http_send("<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js\"></script>");
@@ -792,17 +773,36 @@ http_main (void)
 {
     const char *    thispage = "";
     const char *    header_cols[MAIN_HEADER_COLS]               = { "Name", "Value" };
-    const char *    datetime_header_cols[DATETIME_HEADER_COLS]  = { "YYYY", "MM", "DD", "hh", "mm", "Action" };
-    const char *    ids[5]                                      = { "year", "month", "day", "hour", "min" };
-    const char *    desc[5]                                     = { "", "", "", "", "" };
-    int             maxlen[5]                                   = { 4, 2, 2, 2, 2 };
-    int             maxsize[5]                                  = { 4, 2, 2, 2, 2 };
-    char            year_str[5];
-    char            mon_str[3];
-    char            day_str[3];
-    char            hour_str[3];
-    char            minutes_str[3];
-    const char *    values[5]                                   = { year_str, mon_str, day_str, hour_str, minutes_str };
+    const char *    datetime_header_cols[DATETIME_HEADER_COLS]  = { "YYYY", "MM", "DD", "hh", "mm", "ss", "Action" };
+    const char *    datetime_ids[6]                             = { "year", "month", "day", "hour", "min", "sec" };
+    const char *    datetime_desc[6]                            = { "", "", "", "", "", "" };
+    int             datetime_maxlen[6]                          = { 4, 2, 2, 2, 2, 2};
+    int             datetime_maxsize[6]                         = { 4, 2, 2, 2, 2, 2 };
+    char            datetime_year_str[5];
+    char            datetime_mon_str[3];
+    char            datetime_day_str[3];
+    char            datetime_hour_str[3];
+    char            datetime_minutes_str[3];
+    char            datetime_seconds_str[3];
+    const char *    datetime_values[6]                          = { datetime_year_str, datetime_mon_str, datetime_day_str, datetime_hour_str, datetime_minutes_str, datetime_seconds_str };
+    const char *    tz_cols[MAIN_HEADER_COLS]                   = { "Name", "Value" };
+    const char *    tz_header_cols[TZ_HEADER_COLS]              = { "offset", "hour", "dow", "week", "month", "Action" };
+    const char *    tz_ids[5]                                   = { "offset", "hour", "dow", "week", "month"};
+    const char *    tz_desc[5]                                  = { "", "", "", "", "" };
+    int             tz_maxlen[5]                                = { 4, 2, 1, 1, 2 };
+    int             tz_maxsize[5]                               = { 4, 2, 1, 1, 2 };
+    char            tzstd_offset_str[5];
+    char            tzstd_hour_str[3];
+    char            tzstd_dow_str[2];
+    char            tzstd_week_str[2];
+    char            tzstd_month_str[3];
+    const char *    tzstd_values[5]                             = { tzstd_offset_str, tzstd_hour_str, tzstd_dow_str, tzstd_week_str, tzstd_month_str };
+    char            tzdst_offset_str[5];
+    char            tzdst_hour_str[3];
+    char            tzdst_dow_str[2];
+    char            tzdst_week_str[2];
+    char            tzdst_month_str[3];
+    const char *    tzdst_values[5]                             = { tzdst_offset_str, tzdst_hour_str, tzdst_dow_str, tzdst_week_str, tzdst_month_str };
     char *          action;
     const char *    message                                     = (const char *) 0;
     STR_VAR *       sv;
@@ -812,43 +812,50 @@ http_main (void)
     struct tm *     tmp;
     uint_fast8_t    eeprom_is_up;
 
-    sv              = get_strvar (VERSION_STR_VAR);
-    version         = sv->str;
+//    tmp = get_tm_var (CURRENT_TM_VAR);
+//
+//    if (tmp->tm_year >= 0 && tmp->tm_mon >= 0 && tmp->tm_mday >= 0 && tmp->tm_hour >= 0 && tmp->tm_min >= 0 &&
+//        tmp->tm_year <= 1200 && tmp->tm_mon <= 12 && tmp->tm_mday <= 31 && tmp->tm_hour < 24 && tmp->tm_min < 60)
+//    {                                                               // check values to avoid buffer overflow
+//        sprintf (year_str,      "%4d",  tmp->tm_year + 1900);
+//        sprintf (mon_str,       "%02d", tmp->tm_mon + 1);
+//        sprintf (day_str,       "%02d", tmp->tm_mday);
+//        sprintf (hour_str,      "%02d", tmp->tm_hour);
+//        sprintf (minutes_str,   "%02d", tmp->tm_min);
+//    }
+//    else
+//    {
+//        year_str[0]     = '\0';
+//        mon_str[0]      = '\0';
+//        day_str[0]      = '\0';
+//        hour_str[0]     = '\0';
+//        minutes_str[0]  = '\0';
+//    }
 
-    sv              = get_strvar (EEPROM_VERSION_STR_VAR);
-    eeprom_version  = sv->str;
+    sprintf (datetime_year_str,         "%4d", 1900);
+    sprintf (datetime_mon_str,          "%02d",   1);
+    sprintf (datetime_day_str,          "%02d",   1);
+    sprintf (datetime_hour_str,         "%02d",   0);
+    sprintf (datetime_minutes_str,      "%02d",   0);
+    sprintf (datetime_seconds_str,      "%02d",   0);
 
-    tmp = get_tm_var (CURRENT_TM_VAR);
+    sprintf (tzstd_offset_str,          "%4d",   60);
+    sprintf (tzstd_hour_str,            "%02d",   1);
+    sprintf (tzstd_dow_str,             "%01d",   1);
+    sprintf (tzstd_week_str,            "%01d",   0);
+    sprintf (tzstd_month_str,           "%02d",   0);
 
-    if (tmp->tm_year >= 0 && tmp->tm_mon >= 0 && tmp->tm_mday >= 0 && tmp->tm_hour >= 0 && tmp->tm_min >= 0 &&
-        tmp->tm_year <= 1200 && tmp->tm_mon <= 12 && tmp->tm_mday <= 31 && tmp->tm_hour < 24 && tmp->tm_min < 60)
-    {                                                               // check values to avoid buffer overflow
-        sprintf (year_str,      "%4d",  tmp->tm_year + 1900);
-        sprintf (mon_str,       "%02d", tmp->tm_mon + 1);
-        sprintf (day_str,       "%02d", tmp->tm_mday);
-        sprintf (hour_str,      "%02d", tmp->tm_hour);
-        sprintf (minutes_str,   "%02d", tmp->tm_min);
-    }
-    else
-    {
-        year_str[0]     = '\0';
-        mon_str[0]      = '\0';
-        day_str[0]      = '\0';
-        hour_str[0]     = '\0';
-        minutes_str[0]  = '\0';
-    }
+    sprintf (tzdst_offset_str,          "%4d",   60);
+    sprintf (tzdst_hour_str,            "%02d",   1);
+    sprintf (tzdst_dow_str,             "%01d",   1);
+    sprintf (tzdst_week_str,            "%01d",   0);
+    sprintf (tzdst_month_str,           "%02d",   0);
 
-    eeprom_is_up = get_numvar (EEPROM_IS_UP_NUM_VAR);
     action = http_get_param ("action");
 
     if (action)
     {
-        if (! strcmp (action, "learnir"))
-        {
-            message = "Learning IR remote control...";
-            rpc (LEARN_IR_RPC_VAR);
-        }
-        else if (! strcmp (action, "poweron"))
+        if (! strcmp (action, "poweron"))
         {
             message = "Switching power on...";
             set_numvar (DISPLAY_POWER_NUM_VAR, 1);
@@ -860,69 +867,54 @@ http_main (void)
         }
         else if (! strcmp (action, "savedatetime"))
         {
-            TM tm;
-
             int year    = atoi (http_get_param ("year"));
             int month   = atoi (http_get_param ("month"));
             int day     = atoi (http_get_param ("day"));
             int hour    = atoi (http_get_param ("hour"));
             int minutes = atoi (http_get_param ("min"));
+            int seconds = atoi (http_get_param ("sec"));
 
-            sprintf (year_str,      "%4d",  year);
-            sprintf (mon_str,       "%02d", month);
-            sprintf (day_str,       "%02d", day);
-            sprintf (hour_str,      "%02d", hour);
-            sprintf (minutes_str,   "%02d", minutes);
-
-            tm.tm_year  = year - 1900;
-            tm.tm_mon   = month - 1;
-            tm.tm_mday  = day;
-            tm.tm_hour  = hour;
-            tm.tm_min   = minutes;
-            tm.tm_sec   = 0;
-            tm.tm_wday  = dayofweek (day, month, year);
-
-            set_tm_var (CURRENT_TM_VAR, &tm);
+            cmd_rtc_write(year, month, day, hour, minutes, seconds);
         }
-        else if (! strcmp (action, "saveticker"))
+        else if (! strcmp (action, "savetzstd"))
         {
-            char * ticker = http_get_param ("ticker");
-            set_strvar (TICKER_TEXT_STR_VAR, ticker);
+            int offset    = atoi (http_get_param ("offset"));
+            int hour    = atoi (http_get_param ("hour"));
+            int dow     = atoi (http_get_param ("dow"));
+            int week    = atoi (http_get_param ("week"));
+            int month   = atoi (http_get_param ("month"));
+
+            cmd_tz_write(true, offset, hour, dow, week, month);
+        }
+        else if (! strcmp (action, "savetzdst"))
+        {
+            int offset    = atoi (http_get_param ("offset"));
+            int hour    = atoi (http_get_param ("hour"));
+            int dow     = atoi (http_get_param ("dow"));
+            int week    = atoi (http_get_param ("week"));
+            int month   = atoi (http_get_param ("month"));
+
+            cmd_tz_write(false, offset, hour, dow, week, month);
         }
     }
 
     http_header ("NixieClock");
     http_menu ();
 
-    table_header (header_cols, MAIN_HEADER_COLS);
-    table_row ("Version", version, "");
-    table_row ("EEPROM", eeprom_is_up ? "online" : "offline", "");
-    if (eeprom_is_up)
-    {
-        table_row ("EEPROM Version", eeprom_version, "");
-    }
-    table_trailer ();
 
     table_header (datetime_header_cols, DATETIME_HEADER_COLS);
-    table_row_inputs (thispage, "datetime", 5, ids, desc, values, maxlen, maxsize);
+    table_row_inputs (thispage, "datetime", 6, datetime_ids, datetime_desc, datetime_values, datetime_maxlen, datetime_maxsize);
     table_trailer ();
 
-    table_header (header_cols, TICKER_HEADER_COLS);
-    table_row_input (thispage, "Ticker", "ticker", "", MAX_TICKER_TEXT_LEN);
+    table_header (tz_header_cols, TZ_HEADER_COLS);
+    table_row_inputs (thispage, "tzstd", 5, tz_ids, tz_desc, tzstd_values, tz_maxlen, tz_maxsize);
+    table_row_inputs (thispage, "tzdst", 5, tz_ids, tz_desc, tzdst_values, tz_maxlen, tz_maxsize);
     table_trailer ();
 
     begin_form (thispage);
     button_field ("poweron", "Power On");
     button_field ("poweroff", "Power Off");
-    button_field ("learnir", "Learn IR remote control");
-    button_field ("eepromdump", "EEPROM dump");
     end_form ();
-
-    if (! strcmp (action, "eepromdump"))
-    {
-        message = "Currently not implemented";
-        // http_eeprom_dump ();
-    }
 
     if (message)
     {
@@ -1014,31 +1006,14 @@ http_network (void)
             set_strvar (TIMESERVER_STR_VAR, newtimeserver);
             message = "Timeserver successfully changed.";
         }
-        else if (! strcmp (action, "savetimezone"))
-        {
-            tz = atoi (http_get_param ("timezone"));
-
-            if (tz < 0)
-            {
-                utz = -tz;
-                utz |= 0x100;
-            }
-            else
-            {
-                utz = tz;
-            }
-
-            set_numvar (TIMEZONE_NUM_VAR, utz);
-            message = "Timezone successfully changed.";
-        }
         else if (! strcmp (action, "nettime"))
         {
             message = "Getting net time";
-            rpc (GET_NET_TIME_RPC_VAR);
+            ntp_get_time();
+            //rpc (GET_NET_TIME_RPC_VAR);
         }
     }
 
-    sprintf (timezone_str, "%d", tz);
 
     http_header ("NixieClock Network");
     http_menu ();
@@ -1061,7 +1036,6 @@ http_network (void)
     sv = get_strvar (TIMESERVER_STR_VAR);
 
     table_row_input (thispage, "Time server", "timeserver", sv->str, MAX_IP_LEN);
-    table_row_input (thispage, "Time zone (GMT +)", "timezone", timezone_str, MAX_TIMEZONE_LEN);
     table_trailer ();
 
     begin_form (thispage);
@@ -1100,114 +1074,31 @@ http_display (void)
     static int          already_called  = 0;
     char *              action;
     const char *        message         = (const char *) 0;
-    uint_fast8_t        use_rgbw        = get_numvar (DISPLAY_USE_RGBW_NUM_VAR);
-    DSP_COLORS          rgbw;
-    const char *        ids[4]          = { "red", "green", "blue", "white" };
-    const char *        desc[4]         = { "R", "G", "B", "W" };
-    char *              rgbw_buf[4];
-    const char *        minval[4]       = { "0",   "0",  "0",  "0" };
-    const char *        maxval[4]       = { "63", "63", "63", "63" };
-    const char *        display_mode_names[MAX_DISPLAY_MODE_VARIABLES];
-    int                 max_display_modes;
-    int                 color_animation_mode;
-    uint_fast8_t        auto_brightness_active;
-    uint_fast8_t        display_brightness;
-    char                brbuf[MAX_BRIGHTNESS_LEN + 1];
-    char                red_buf[MAX_COLOR_VALUE_LEN + 1];
-    char                green_buf[MAX_COLOR_VALUE_LEN + 1];
-    char                blue_buf[MAX_COLOR_VALUE_LEN + 1];
-    char                white_buf[MAX_COLOR_VALUE_LEN + 1];
-    char                display_temperature_interval_str[4];
-    char                display_heart_interval_str[4];
-    char                display_xmas_tree_interval_str[4];
-    int                 display_mode;
+    const char *        display_mode_names[MAX_DISPLAY_MODE_VARIABLES] = { "None", "1", "2", "3" };
+    int                 max_display_modes = MAX_DISPLAY_MODE_VARIABLES;
+    int                 display_mode = 0;
+    const char *        display_type_names[MAX_DISPLAY_TYPE_VARIABLES] = { "None", "1", "2", "3" };
+    int                 max_display_types = MAX_DISPLAY_TYPE_VARIABLES;
+    int                 display_type = 0;
     uint_fast8_t        display_flags;
-    uint_fast8_t        permanent_display_of_it_is;
-    uint_fast8_t        display_temperature_interval;
-    uint_fast8_t        display_heart_interval;
-    uint_fast8_t        display_xmas_tree_interval;
     uint_fast8_t        idx;
     uint_fast8_t        rtc = 0;
 
-    display_mode                    = get_numvar (DISPLAY_MODE_NUM_VAR);
-    max_display_modes               = get_numvar (MAX_DISPLAY_MODES_NUM_VAR);
-    display_flags                   = get_numvar (DISPLAY_FLAGS_NUM_VAR);
-    color_animation_mode            = get_numvar (COLOR_ANIMATION_MODE_NUM_VAR);
-    display_brightness              = get_numvar (DISPLAY_BRIGHTNESS_NUM_VAR);
-    auto_brightness_active          = get_numvar (DISPLAY_AUTOMATIC_BRIGHTNESS_ACTIVE_NUM_VAR);
-    display_temperature_interval    = get_numvar (DISPLAY_TEMPERATURE_INTERVAL_NUM_VAR);
-    display_heart_interval    		= get_numvar (DISPLAY_HEART_INTERVAL_NUM_VAR);
-    display_xmas_tree_interval    	= get_numvar (DISPLAY_XMAS_TREE_INTERVAL_NUM_VAR);
-    get_dsp_color_var (DISPLAY_DSP_COLOR_VAR, &rgbw);
-
-    permanent_display_of_it_is      = (display_flags & DISPLAY_FLAGS_PERMANENT_IT_IS) ? 1 : 0;
-
-    for (idx = 0; idx < max_display_modes; idx++)
-    {
-        DISPLAY_MODE * dm = get_display_mode_var ((DISPLAY_MODE_VARIABLE) idx);
-        display_mode_names[idx] = dm->name;
-    }
+    //display_mode                    = get_numvar (DISPLAY_MODE_NUM_VAR);
 
     action = http_get_param ("action");
 
     if (action)
     {
-        if (! strcmp (action, "saveitis"))
-        {
-            if (http_get_checkbox_param ("itis"))
-            {
-                permanent_display_of_it_is = 1;
-                display_flags |= DISPLAY_FLAGS_PERMANENT_IT_IS;
-            }
-            else
-            {
-                permanent_display_of_it_is = 0;
-                display_flags &= ~DISPLAY_FLAGS_PERMANENT_IT_IS;
-            }
-
-            set_numvar (DISPLAY_FLAGS_NUM_VAR, display_flags);
-        }
-        else if (! strcmp (action, "savebrightness"))
-        {
-            display_brightness = atoi (http_get_param ("brightness"));
-            set_numvar (DISPLAY_BRIGHTNESS_NUM_VAR, display_brightness);
-        }
-        else if (! strcmp (action, "savecolors"))
-        {
-            rgbw.red     = atoi (http_get_param ("red"));
-            rgbw.green   = atoi (http_get_param ("green"));
-            rgbw.blue    = atoi (http_get_param ("blue"));
-
-            if (use_rgbw)
-            {
-                rgbw.white = atoi (http_get_param ("white"));
-            }
-            else
-            {
-                rgbw.white = 0;
-            }
-
-            set_dsp_color_var (DISPLAY_DSP_COLOR_VAR, &rgbw, use_rgbw);
-        }
-        else if (! strcmp (action, "savedisplaymode"))
+        if (! strcmp (action, "savedisplaymode"))
         {
             display_mode = atoi (http_get_param ("displaymode"));
-            set_numvar (DISPLAY_MODE_NUM_VAR, display_mode);
+            cmd_nixie_setmode ((uint8_t)display_mode);
         }
-        else if (! strcmp (action, "savetinterval"))
+        else if (! strcmp (action, "savedisplaytype"))
         {
-            display_temperature_interval = atoi (http_get_param ("tinterval"));
-            set_numvar (DISPLAY_TEMPERATURE_INTERVAL_NUM_VAR, display_temperature_interval);
-        }
-        else if (! strcmp (action, "savehinterval"))
-        {
-            display_heart_interval = atoi (http_get_param ("hinterval"));
-            set_numvar (DISPLAY_HEART_INTERVAL_NUM_VAR, display_heart_interval);
-        }
-        else if (! strcmp (action, "savexinterval"))
-        {
-            display_xmas_tree_interval = atoi (http_get_param ("xinterval"));
-            set_numvar (DISPLAY_XMAS_TREE_INTERVAL_NUM_VAR, display_xmas_tree_interval);
+            display_type = atoi (http_get_param ("displaytype"));
+            cmd_nixie_settype ((uint8_t)display_type);
         }
         else if (! strcmp (action, "testdisplay"))
         {
@@ -1226,86 +1117,11 @@ http_display (void)
         }
     }
 
-    sprintf (brbuf,         "%d", display_brightness);
-
-    sprintf (red_buf,       "%d", rgbw.red);
-    sprintf (green_buf,     "%d", rgbw.green);
-    sprintf (blue_buf,      "%d", rgbw.blue);
-
-    if (use_rgbw)
-    {
-        sprintf (white_buf, "%d", rgbw.white);
-    }
-    else
-    {
-        white_buf[0] = '0';
-        white_buf[1] = '\0';
-    }
-
-    rgbw_buf[0] = red_buf;
-    rgbw_buf[1] = green_buf;
-    rgbw_buf[2] = blue_buf;
-    rgbw_buf[3] = white_buf;
-
-    if (display_temperature_interval)
-    {
-        sprintf (display_temperature_interval_str, "%d", display_temperature_interval);
-    }
-    else
-    {
-        display_temperature_interval_str[0] = '\0';
-    }
-
-    if (display_heart_interval)
-    {
-        sprintf (display_heart_interval_str, "%d", display_heart_interval);
-    }
-    else
-    {
-        display_heart_interval_str[0] = '\0';
-    }
-
-    if (display_xmas_tree_interval)
-    {
-        sprintf (display_xmas_tree_interval_str, "%d", display_xmas_tree_interval);
-    }
-    else
-    {
-        display_xmas_tree_interval_str[0] = '\0';
-    }
-
-    http_header ("WordClock Display");
+    http_header ("NixieClock Display");
     http_menu ();
     table_header (header_cols, DISPLAY_HEADER_COLS);
-
-    table_row_checkbox (thispage, "ES IST", "itis", "Permanent display of \"ES IST\"", permanent_display_of_it_is);
     table_row_select (thispage, "Display Mode", "displaymode", display_mode_names, display_mode, max_display_modes);
-
-    if (! auto_brightness_active)
-    {
-        table_row_slider (thispage, "Brightness (1-15)", "brightness", brbuf, "0", "15");
-    }
-
-    if (color_animation_mode == COLOR_ANIMATION_MODE_NONE)
-    {
-        uint_fast8_t    n_colors;
-
-        if (use_rgbw)
-        {
-            n_colors = 4;
-        }
-        else
-        {
-            n_colors = 3;
-        }
-
-        table_row_sliders (thispage, "Colors", "colors", n_colors, ids, desc, rgbw_buf, minval, maxval);
-    }
-
-    table_row_input (thispage, "Temp display interval", "tinterval", display_temperature_interval_str, MAX_MINUTE_INTERVAL_LEN);
-    table_row_input (thispage, "Heart display interval", "hinterval", display_heart_interval_str, MAX_MINUTE_INTERVAL_LEN);
-    table_row_input (thispage, "XMas tree display interval", "xinterval", display_xmas_tree_interval_str, MAX_MINUTE_INTERVAL_LEN);
-
+    table_row_select (thispage, "Display Typee", "displaytype", display_type_names, display_type, max_display_types);
     table_trailer ();
 
     begin_form (thispage);

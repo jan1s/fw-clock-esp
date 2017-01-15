@@ -2,6 +2,7 @@
  * vars.h - synchronization of variables between STM32 and ESP8266
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+*              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -148,169 +149,28 @@ typedef enum
     DISPLAY_MODE_1_VAR,
     DISPLAY_MODE_2_VAR,
     DISPLAY_MODE_3_VAR,
-    DISPLAY_MODE_4_VAR,
-    DISPLAY_MODE_5_VAR,
-    DISPLAY_MODE_6_VAR,
-    DISPLAY_MODE_7_VAR,
-    DISPLAY_MODE_8_VAR,
-    DISPLAY_MODE_9_VAR,
-    DISPLAY_MODE_10_VAR,
-    DISPLAY_MODE_11_VAR,
-    DISPLAY_MODE_12_VAR,
-    DISPLAY_MODE_13_VAR,
-    DISPLAY_MODE_14_VAR,
-    DISPLAY_MODE_15_VAR,
-    DISPLAY_MODE_16_VAR,
-    DISPLAY_MODE_17_VAR,
-    DISPLAY_MODE_18_VAR,
-    DISPLAY_MODE_19_VAR,
-    DISPLAY_MODE_20_VAR,
-    DISPLAY_MODE_21_VAR,
-    DISPLAY_MODE_22_VAR,
-    DISPLAY_MODE_23_VAR,
     MAX_DISPLAY_MODE_VARIABLES                                       // must be the last member
 } DISPLAY_MODE_VARIABLE;
 
+typedef enum
+{
+    DISPLAY_TYPE_0_VAR,
+    DISPLAY_TYPE_1_VAR,
+    DISPLAY_TYPE_2_VAR,
+    DISPLAY_TYPE_3_VAR,
+    MAX_DISPLAY_TYPE_VARIABLES                                       // must be the last member
+} DISPLAY_TYPE_VARIABLE;
+
 extern DISPLAY_MODE      displaymodevars[MAX_DISPLAY_MODE_VARIABLES];
 extern DISPLAY_MODE *    get_display_mode_var (DISPLAY_MODE_VARIABLE);
-extern unsigned int      set_display_mode_name (DISPLAY_MODE_VARIABLE, char *);
+extern unsigned int      set_display_mode (DISPLAY_MODE_VARIABLE);
+extern unsigned int      set_display_type (DISPLAY_TYPE_VARIABLE);
 
-/*-------------------------------------------------------------------------------------------------------------------------------------------
- * display color variables:
- *-------------------------------------------------------------------------------------------------------------------------------------------
- */
-typedef struct                                                          // display colors
-{
-    uint8_t red;                                                        // red, 0...63 (MAX_COLOR_STEPS)
-    uint8_t green;                                                      // green, 0...63 (MAX_COLOR_STEPS)
-    uint8_t blue;                                                       // blue, 0...63 (MAX_COLOR_STEPS)
-    uint8_t white;                                                      // white, 0...63 (MAX_COLOR_STEPS)
-} DSP_COLORS;
+extern uint8_t cmd_rtc_write (uint16_t yr, uint8_t mon, uint8_t day, uint8_t hr, uint8_t minute, uint8_t sec);
+extern uint8_t cmd_tz_write (bool std, uint16_t offset, uint8_t hour, uint8_t dow, uint8_t week, uint8_t month);
+extern uint8_t cmd_nixie_setmode (uint8_t var);
+extern uint8_t cmd_nixie_settype (uint8_t var);
 
-
-typedef enum
-{
-    DISPLAY_DSP_COLOR_VAR,
-    AMBILIGHT_DSP_COLOR_VAR,
-    MAX_DSP_COLOR_VARIABLES                                                   // must be the last member
-} DSP_COLOR_VARIABLE;
-
-extern DSP_COLORS       dspcolorvars[MAX_DSP_COLOR_VARIABLES];
-extern unsigned int     get_dsp_color_var (DSP_COLOR_VARIABLE, DSP_COLORS * rgb);
-extern unsigned int     set_dsp_color_var (DSP_COLOR_VARIABLE, DSP_COLORS * rgb, int);
-
-/*-------------------------------------------------------------------------------------------------------------------------------------------
- * display animation variables:
- *-------------------------------------------------------------------------------------------------------------------------------------------
- */
-#define MAX_DISPLAY_ANIMATION_NAME_LEN          15
-
-#define ANIMATION_MIN_DECELERATION               1
-#define ANIMATION_MAX_DECELERATION              15
-
-#define ANIMATION_FLAG_NONE                     0x00                    // no animation flag
-#define ANIMATION_FLAG_CONFIGURABLE             0x01                    // animation selectable per random animation
-#define ANIMATION_FLAG_FAVOURITE                0x02                    // animation is favourite
-
-typedef struct
-{
-    char            name[MAX_DISPLAY_ANIMATION_NAME_LEN + 1];
-    uint_fast8_t    deceleration;                                       // 1 = fastest, 15 = slowest
-    uint_fast8_t    default_deceleration;                               // 1 = fastest, 15 = slowest
-    uint_fast8_t    flags;                                              // yet not used
-} DISPLAY_ANIMATION;
-
-typedef enum
-{
-    NO_DISPLAY_ANIMATION_VAR,
-    FADE_DISPLAY_ANIMATION_VAR,
-    ROLL_DISPLAY_ANIMATION_VAR,
-    EXPLODE_DISPLAY_ANIMATION_VAR,
-    RANDOM_DISPLAY_ANIMATION_VAR,
-    SNAKE_DISPLAY_ANIMATION_VAR,
-    TELETYPE_DISPLAY_ANIMATION_VAR,
-    CUBE_DISPLAY_ANIMATION_VAR,
-    MATRIX_DISPLAY_ANIMATION_VAR,
-    DROP_DISPLAY_ANIMATION_VAR,
-    SQUEEZE_DISPLAY_ANIMATION_VAR,
-    MAX_DISPLAY_ANIMATION_VARIABLES                                       // must be the last member
-} DISPLAY_ANIMATION_VARIABLE;
-
-extern DISPLAY_ANIMATION    displayanimationvars[MAX_DISPLAY_ANIMATION_VARIABLES];
-extern DISPLAY_ANIMATION *  get_display_animation_var (DISPLAY_ANIMATION_VARIABLE);
-extern unsigned int         set_display_animation_name (DISPLAY_ANIMATION_VARIABLE, char *);
-extern unsigned int         set_display_animation_deceleration (DISPLAY_ANIMATION_VARIABLE, uint_fast8_t);
-extern unsigned int         set_display_animation_default_deceleration (DISPLAY_ANIMATION_VARIABLE, uint_fast8_t);
-extern unsigned int         set_display_animation_flags (DISPLAY_ANIMATION_VARIABLE, uint_fast8_t);
-
-/*-------------------------------------------------------------------------------------------------------------------------------------------
- * color animation variables:
- *-------------------------------------------------------------------------------------------------------------------------------------------
- */
-#define MAX_COLOR_ANIMATION_NAME_LEN                15
-
-#define COLOR_ANIMATION_MAX_DECELERATION            15                  // deceleration = 15 is lowest deceleration, min is 0
-
-#define COLOR_ANIMATION_FLAG_NONE                   0x00                // no color animation flag
-#define COLOR_ANIMATION_FLAG_CONFIGURABLE           0x01                // animation is configurable
-
-
-typedef struct
-{
-    char            name[MAX_COLOR_ANIMATION_NAME_LEN + 1];
-    uint_fast8_t    deceleration;                                       // 0 = fastest, 15 = slowest
-    uint_fast8_t    default_deceleration;                               // 0 = fastest, 15 = slowest
-    uint_fast8_t    flags;                                              // yet not used
-} COLOR_ANIMATION;
-
-typedef enum
-{
-    NO_COLOR_ANIMATION_VAR,
-    RAINBOW_COLOR_ANIMATION_VAR,
-    MAX_COLOR_ANIMATION_VARIABLES                                       // must be the last member
-} COLOR_ANIMATION_VARIABLE;
-
-extern COLOR_ANIMATION      coloranimationvars[MAX_COLOR_ANIMATION_VARIABLES];
-extern COLOR_ANIMATION *    get_color_animation_var (COLOR_ANIMATION_VARIABLE);
-extern unsigned int         set_color_animation_name (COLOR_ANIMATION_VARIABLE, char *);
-extern unsigned int         set_color_animation_deceleration (COLOR_ANIMATION_VARIABLE, uint_fast8_t);
-extern unsigned int         set_color_animation_default_deceleration (COLOR_ANIMATION_VARIABLE, uint_fast8_t);
-extern unsigned int         set_color_animation_flags (COLOR_ANIMATION_VARIABLE, uint_fast8_t);
-
-/*-------------------------------------------------------------------------------------------------------------------------------------------
- * ambilight mode variables:
- *-------------------------------------------------------------------------------------------------------------------------------------------
- */
-#define MAX_AMBILIGHT_MODE_NAME_LEN             15
-
-#define AMBILIGHT_MODE_MAX_DECELERATION         15                      // deceleration = 15 is lowest deceleration, min is 0
-
-#define AMBILIGHT_FLAG_NONE                     0x00                    // no animation flag
-#define AMBILIGHT_FLAG_CONFIGURABLE             0x01                    // ambilight mode is configurable
-
-typedef struct
-{
-    char            name[MAX_AMBILIGHT_MODE_NAME_LEN + 1];
-    uint_fast8_t    deceleration;                                       // 0 = fastest, 15 = slowest
-    uint_fast8_t    default_deceleration;                               // 0 = fastest, 15 = slowest
-    uint_fast8_t    flags;
-} AMBILIGHT_MODE;
-
-typedef enum
-{
-    NORMAL_AMBILIGHT_MODE_VAR,
-    CLOCK_AMBILIGHT_MODE_VAR,
-    CLOCK2_AMBILIGHT_MODE_VAR,
-    RAINBOW_AMBILIGHT_MODE_VAR,
-    MAX_AMBILIGHT_MODE_VARIABLES                                       // must be the last member
-} AMBILIGHT_MODE_VARIABLE;
-
-extern AMBILIGHT_MODE       ambilightmodevars[MAX_AMBILIGHT_MODE_VARIABLES];
-extern AMBILIGHT_MODE *     get_ambilight_mode_var (AMBILIGHT_MODE_VARIABLE);
-extern unsigned int         set_ambilight_mode_name (AMBILIGHT_MODE_VARIABLE, char *);
-extern unsigned int         set_ambilight_mode_deceleration (AMBILIGHT_MODE_VARIABLE, uint_fast8_t);
-extern unsigned int         set_ambilight_mode_default_deceleration (AMBILIGHT_MODE_VARIABLE, uint_fast8_t);
-extern unsigned int         set_ambilight_mode_flags (AMBILIGHT_MODE_VARIABLE, uint_fast8_t);
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------
  * night time variables:

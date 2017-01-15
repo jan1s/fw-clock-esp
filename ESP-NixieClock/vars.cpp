@@ -2,6 +2,7 @@
  * vars.cpp - synchronization of variables between STM32 and ESP8266
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,6 +13,73 @@
 #include "Arduino.h"
 #include "base.h"
 #include "vars.h"
+
+uint8_t cmd_rtc_write (uint16_t yr, uint8_t mon, uint8_t day, uint8_t hr, uint8_t minute, uint8_t sec)
+{
+    Serial.printf ("rtc_write %u %u %u %u %u %u\r\n", (unsigned int) yr, (unsigned int) mon, (unsigned int) day, (unsigned int) hr, (unsigned int) minute, (unsigned int) sec);
+    Serial.flush ();
+
+    return 1;
+}
+
+uint8_t cmd_tz_write (bool std, uint16_t offset, uint8_t hour, uint8_t dow, uint8_t week, uint8_t month)
+{
+    if(std)
+    {
+      Serial.printf ("tz_write %s %u %u %u %u\r\n", "std", (unsigned int) offset, (unsigned int) hour, (unsigned int) dow, (unsigned int) week, (unsigned int) month);
+    }
+    else
+    {
+      Serial.printf ("tz_write %s %u %u %u %u\r\n", "dst", (unsigned int) offset, (unsigned int) hour, (unsigned int) dow, (unsigned int) week, (unsigned int) month);
+    }
+    Serial.flush ();
+
+    return 1;
+}
+
+uint8_t cmd_nixie_setmode (uint8_t var)
+{
+    unsigned int   rtc = 0;
+
+    if (var < MAX_DISPLAY_MODE_VARIABLES)
+    {
+        Serial.printf ("cmd_nixie_set_mode %02x\r\n", (int) var);
+        Serial.flush ();
+        rtc =  1;
+    }
+
+    return rtc;
+}
+
+uint8_t cmd_nixie_settype (uint8_t var)
+{
+    unsigned int   rtc = 0;
+
+    if (var < MAX_DISPLAY_TYPE_VARIABLES)
+    {
+        Serial.printf ("cmd_nixie_set_type %02x\r\n", (int) var);
+        Serial.flush ();
+        rtc =  1;
+    }
+
+    return rtc;
+}
+
+DISPLAY_MODE * get_display_mode_var (DISPLAY_MODE_VARIABLE var)
+{
+    DISPLAY_MODE *   rtc = (DISPLAY_MODE *) 0;
+
+    if (var < MAX_DISPLAY_MODE_VARIABLES)
+    {
+        rtc = &(displaymodevars[var]);
+    }
+
+    return rtc;
+}
+
+
+
+// ---------------------------------
 
 unsigned int
 rpc (RPC_VARIABLE var)
@@ -146,312 +214,7 @@ set_tm_var (TM_VARIABLE var, TM * tm)
 
 DISPLAY_MODE displaymodevars[MAX_DISPLAY_MODE_VARIABLES];
 
-DISPLAY_MODE *
-get_display_mode_var (DISPLAY_MODE_VARIABLE var)
-{
-    DISPLAY_MODE *   rtc = (DISPLAY_MODE *) 0;
 
-    if (var < MAX_DISPLAY_MODE_VARIABLES)
-    {
-        rtc = &(displaymodevars[var]);
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_display_mode_name (DISPLAY_MODE_VARIABLE var, char * name)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DISPLAY_MODE_VARIABLES)
-    {
-        strncpy (displaymodevars[var].name, name, MAX_DISPLAY_MODE_NAME_LEN);
-        Serial.printf ("CMD DN%02x%s\r\n", (int) var, name);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-DSP_COLORS dspcolorvars[MAX_DSP_COLOR_VARIABLES];
-
-unsigned int
-get_dsp_color_var (DSP_COLOR_VARIABLE var, DSP_COLORS * t)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DSP_COLOR_VARIABLES)
-    {
-        memcpy (t, &(dspcolorvars[var]), sizeof (DSP_COLORS));
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_dsp_color_var (DSP_COLOR_VARIABLE var, DSP_COLORS * s, int use_rgbw)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DSP_COLOR_VARIABLES)
-    {
-        memcpy (&(dspcolorvars[var]), s, sizeof (DSP_COLORS));
-
-		if (use_rgbw)
-		{
-			Serial.printf ("CMD DC%02x%02x%02x%02x%02x\r\n", (int) var, s->red, s->green, s->blue, s->white);
-		}
-		else
-		{
-			Serial.printf ("CMD DC%02x%02x%02x%02x\r\n", (int) var, s->red, s->green, s->blue);
-		}
-
-        Serial.flush ();
-        rtc = 1;
-    }
-
-    return rtc;
-}
-
-DISPLAY_ANIMATION displayanimationvars[MAX_DISPLAY_ANIMATION_VARIABLES];
-
-DISPLAY_ANIMATION *
-get_display_animation_var (DISPLAY_ANIMATION_VARIABLE var)
-{
-    DISPLAY_ANIMATION *   rtc = (DISPLAY_ANIMATION *) 0;
-
-    if (var < MAX_DISPLAY_ANIMATION_VARIABLES)
-    {
-        rtc = &(displayanimationvars[var]);
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_display_animation_name (DISPLAY_ANIMATION_VARIABLE var, char * name)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DISPLAY_ANIMATION_VARIABLES)
-    {
-        strncpy (displayanimationvars[var].name, name, MAX_DISPLAY_ANIMATION_NAME_LEN);
-        Serial.printf ("CMD AN%02x%s\r\n", (int) var, name);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_display_animation_deceleration (DISPLAY_ANIMATION_VARIABLE var, uint_fast8_t deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DISPLAY_ANIMATION_VARIABLES)
-    {
-        displayanimationvars[var].deceleration = deceleration;
-        Serial.printf ("CMD AD%02x%02x\r\n", (int) var, deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_display_animation_default_deceleration (DISPLAY_ANIMATION_VARIABLE var, uint_fast8_t default_deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DISPLAY_ANIMATION_VARIABLES)
-    {
-        displayanimationvars[var].default_deceleration = default_deceleration;
-        Serial.printf ("CMD AE%02x%02x\r\n", (int) var, default_deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_display_animation_flags (DISPLAY_ANIMATION_VARIABLE var, uint_fast8_t flags)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_DISPLAY_ANIMATION_VARIABLES)
-    {
-        displayanimationvars[var].flags = flags;
-        Serial.printf ("CMD AF%02x%02x\r\n", (int) var, flags);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-COLOR_ANIMATION coloranimationvars[MAX_COLOR_ANIMATION_VARIABLES];
-
-COLOR_ANIMATION *
-get_color_animation_var (COLOR_ANIMATION_VARIABLE var)
-{
-    COLOR_ANIMATION *   rtc = (COLOR_ANIMATION *) 0;
-
-    if (var < MAX_COLOR_ANIMATION_VARIABLES)
-    {
-        rtc = &(coloranimationvars[var]);
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_color_animation_name (COLOR_ANIMATION_VARIABLE var, char * name)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_COLOR_ANIMATION_VARIABLES)
-    {
-        strncpy (coloranimationvars[var].name, name, MAX_COLOR_ANIMATION_NAME_LEN);
-        Serial.printf ("CMD CN02x%s\r\n", (int) var, name);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_color_animation_deceleration (COLOR_ANIMATION_VARIABLE var, uint_fast8_t deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_COLOR_ANIMATION_VARIABLES)
-    {
-        coloranimationvars[var].deceleration = deceleration;
-        Serial.printf ("CMD CD%02x%02x\r\n", (int) var, deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_color_animation_default_deceleration (COLOR_ANIMATION_VARIABLE var, uint_fast8_t default_deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_COLOR_ANIMATION_VARIABLES)
-    {
-        coloranimationvars[var].default_deceleration = default_deceleration;
-        Serial.printf ("CMD CE%02x%02x\r\n", (int) var, default_deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_color_animation_flags (COLOR_ANIMATION_VARIABLE var, uint_fast8_t flags)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_COLOR_ANIMATION_VARIABLES)
-    {
-        coloranimationvars[var].flags = flags;
-        Serial.printf ("CMD CF%02x%02x\r\n", (int) var, flags);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-AMBILIGHT_MODE ambilightmodevars[MAX_AMBILIGHT_MODE_VARIABLES];
-
-AMBILIGHT_MODE *
-get_ambilight_mode_var (AMBILIGHT_MODE_VARIABLE var)
-{
-    AMBILIGHT_MODE *   rtc = (AMBILIGHT_MODE *) 0;
-
-    if (var < MAX_AMBILIGHT_MODE_VARIABLES)
-    {
-        rtc = &(ambilightmodevars[var]);
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_ambilight_mode_name (AMBILIGHT_MODE_VARIABLE var, char * name)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_AMBILIGHT_MODE_VARIABLES)
-    {
-        strncpy (ambilightmodevars[var].name, name, MAX_AMBILIGHT_MODE_VARIABLES);
-        Serial.printf ("CMD MN%02x%s\r\n", (int) var, name);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_ambilight_mode_deceleration (AMBILIGHT_MODE_VARIABLE var, uint_fast8_t deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_AMBILIGHT_MODE_VARIABLES)
-    {
-        ambilightmodevars[var].deceleration = deceleration;
-        Serial.printf ("CMD MD%02x%02x\r\n", (int) var, deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_ambilight_mode_default_deceleration (AMBILIGHT_MODE_VARIABLE var, uint_fast8_t default_deceleration)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_AMBILIGHT_MODE_VARIABLES)
-    {
-        ambilightmodevars[var].default_deceleration = default_deceleration;
-        Serial.printf ("CMD ME%02x%02x\r\n", (int) var, default_deceleration);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
-
-unsigned int
-set_ambilight_mode_flags (AMBILIGHT_MODE_VARIABLE var, uint_fast8_t flags)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_AMBILIGHT_MODE_VARIABLES)
-    {
-        ambilightmodevars[var].flags = flags;
-        Serial.printf ("CMD MF%02x%02x\r\n", (int) var, flags);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
 
 
 NIGHT_TIME nighttimevars[MAX_NIGHT_TIME_VARIABLES];
@@ -579,186 +342,7 @@ var_set_parameter (char * parameters)
                     break;
                 }
 
-                case 'C':                                       // DC: Display Color
-                {
-                    uint_fast8_t use_rgbw = get_numvar (DISPLAY_USE_RGBW_NUM_VAR);
-
-                    if (var_idx < MAX_DSP_COLOR_VARIABLES)
-                    {
-                        dspcolorvars[var_idx].red = htoi (parameters, 2);
-                        parameters += 2;
-                        dspcolorvars[var_idx].green = htoi (parameters, 2);
-                        parameters += 2;
-                        dspcolorvars[var_idx].blue = htoi (parameters, 2);
-                        parameters += 2;
-
-                        if (use_rgbw)
-                        {
-                            dspcolorvars[var_idx].white = htoi (parameters, 2);
-                            parameters += 2;
-                        }
-                    }
-                    break;
-                }
-            }
-            break;
-        }
-
-        case 'A':                                                               // animation
-        {
-            cmd_code = *parameters++;
-            var_idx = htoi (parameters, 2);
-            parameters += 2;
-
-            switch (cmd_code)
-            {
-                case 'N':                                                       // AN: Animation mode Name
-                {
-                    if (var_idx < MAX_DISPLAY_ANIMATION_VARIABLES)
-                    {
-                        strncpy (displayanimationvars[var_idx].name, parameters, MAX_DISPLAY_ANIMATION_NAME_LEN);
-                    }
-                    break;
-                }
-
-                case 'D':                                                       // AD: Animation Deceleration
-                {
-                    if (var_idx < MAX_DISPLAY_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        displayanimationvars[var_idx].deceleration = deceleration;
-                    }
-                    break;
-                }
-
-                case 'E':                                                       // AE: Animation default deceleration
-                {
-                    if (var_idx < MAX_DISPLAY_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t default_deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        displayanimationvars[var_idx].default_deceleration = default_deceleration;
-                    }
-                    break;
-                }
-
-                case 'F':                                                       // AF: Animation Flags
-                {
-                    if (var_idx < MAX_DISPLAY_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t flags = htoi (parameters, 2);
-                        parameters += 2;
-                        displayanimationvars[var_idx].flags = flags;
-                    }
-                    break;
-                }
-            }
-            break;
-        }
-
-        case 'C':                                                               // Color animation
-        {
-            cmd_code = *parameters++;
-            var_idx = htoi (parameters, 2);
-            parameters += 2;
-
-            switch (cmd_code)
-            {
-                case 'N':                                                       // CN: Color animation Name
-                {
-                    if (var_idx < MAX_COLOR_ANIMATION_VARIABLES)
-                    {
-                        strncpy (coloranimationvars[var_idx].name, parameters, MAX_COLOR_ANIMATION_NAME_LEN);
-                    }
-                    break;
-                }
-
-                case 'D':                                                       // CD: Color animation Deceleration
-                {
-                    if (var_idx < MAX_COLOR_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        coloranimationvars[var_idx].deceleration = deceleration;
-                    }
-                    break;
-                }
-
-                case 'E':                                                       // CE: Color animation default deceleration
-                {
-                    if (var_idx < MAX_COLOR_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t default_deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        coloranimationvars[var_idx].default_deceleration = default_deceleration;
-                    }
-                    break;
-                }
-
-                case 'F':                                                       // CF: Animation Flags
-                {
-                    if (var_idx < MAX_COLOR_ANIMATION_VARIABLES)
-                    {
-                        uint_fast8_t flags = htoi (parameters, 2);
-                        parameters += 2;
-                        coloranimationvars[var_idx].flags = flags;
-                    }
-                    break;
-                }
-            }
-            break;
-        }
-
-        case 'M':                                                               // Ambilight mode
-        {
-            cmd_code = *parameters++;
-            var_idx = htoi (parameters, 2);
-            parameters += 2;
-
-            switch (cmd_code)
-            {
-                case 'N':                                                       // MN: Ambilight mode Name
-                {
-                    if (var_idx < MAX_AMBILIGHT_MODE_VARIABLES)
-                    {
-                        strncpy (ambilightmodevars[var_idx].name, parameters, MAX_AMBILIGHT_MODE_NAME_LEN);
-                    }
-                    break;
-                }
-
-                case 'D':                                                       // MD: Ambilight mode Deceleration
-                {
-                    if (var_idx < MAX_AMBILIGHT_MODE_VARIABLES)
-                    {
-                        uint_fast8_t deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        ambilightmodevars[var_idx].deceleration = deceleration;
-                    }
-                    break;
-                }
-
-                case 'E':                                                       // ME: Ambilight mode default deceleration
-                {
-                    if (var_idx < MAX_AMBILIGHT_MODE_VARIABLES)
-                    {
-                        uint_fast8_t default_deceleration = htoi (parameters, 2);
-                        parameters += 2;
-                        ambilightmodevars[var_idx].default_deceleration = default_deceleration;
-                    }
-                    break;
-                }
-
-                case 'F':                                                       // MF: Ambilight mode Flags
-                {
-                    if (var_idx < MAX_AMBILIGHT_MODE_VARIABLES)
-                    {
-                        uint_fast8_t flags = htoi (parameters, 2);
-                        parameters += 2;
-                        ambilightmodevars[var_idx].flags = flags;
-                    }
-                    break;
-                }
+             
             }
             break;
         }

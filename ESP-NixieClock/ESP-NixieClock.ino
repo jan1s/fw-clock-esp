@@ -57,7 +57,6 @@
 #include "http.h"
 #include "udpsrv.h"
 #include "ntp.h"
-#include "weather.h"
 #include "vars.h"
 #include "version.h"
 
@@ -215,69 +214,6 @@ loop()
                                 key = p + 2;
 
                                 wifi_connect (ssid, key);
-                            }
-                        }
-                    }
-                }
-
-                if (! syntax_ok)
-                {
-                    Serial.println ("ERROR syntax error");
-                    Serial.flush ();
-                }
-            }
-            else if (! strncmp (cmd_buffer, "weather ", 8))
-            {
-                int     syntax_ok = false;
-                char *  appid;
-                char *  city;
-                char *  lon;
-                char *  lat;
-                char *  p = cmd_buffer + 8;
-                char *  pp;
-
-                if (*p == '"')
-                {
-                    pp = strchr (p + 1, '"');
-
-                    if (pp)
-                    {
-                        *pp = '\0';
-                        appid = p + 1;
-                        p = pp + 1;
-
-                        if (*p == ',' && *(p + 1) == '"')
-                        {
-                            pp = strchr (p + 2, '"');
-
-                            if (pp)
-                            {
-                                *pp = '\0';
-
-                                if (*(pp + 1))                                       // "appid","lon","lat"
-                                {
-                                    lon = p + 2;
-                                    p = pp + 1;
-
-                                    if (*p == ',' && *(p + 1) == '"')
-                                    {
-                                        pp = strchr (p + 2, '"');
-
-                                        if (pp)
-                                        {
-                                            *pp = '\0';
-                                            lat = p + 2;
-                                            syntax_ok = true;
-                                            get_weather (appid, lon, lat);
-                                        }
-                                    }
-                                }
-                                else                                                // "appid","city"
-                                {
-                                    city = p + 2;
-                                    syntax_ok = true;
-                                    get_weather (appid, city);
-                                }
                             }
                         }
                     }

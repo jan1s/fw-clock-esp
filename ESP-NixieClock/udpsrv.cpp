@@ -2,6 +2,7 @@
  * udpsrv.cpp - UDP server for Android App
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,100 +86,11 @@ udp_server_loop (void)
 
             switch (udp_server_packet_buffer[0])
             {
-                case LISTENER_ANIMATION_MODE_CODE:                          // set animation mode
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (ANIMATION_MODE_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-                case LISTENER_COLOR_ANIMATION_MODE_CODE:                    // set color animation mode
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (COLOR_ANIMATION_MODE_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
                 case LISTENER_DISPLAY_MODE_CODE:                            // set display mode
                 {
                     if (noBytes == 2)
                     {
                         set_numvar (DISPLAY_MODE_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-                case LISTENER_AMBILIGHT_MODE_CODE:                          // set ambilight mode
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (AMBILIGHT_MODE_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-
-                case LISTENER_SET_BRIGHTNESS_CODE:                          // set display brightness
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (DISPLAY_BRIGHTNESS_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-
-                case LISTENER_SET_AMBILIGHT_BRIGHTNESS_CODE:                // set ambilight brightness
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (AMBILIGHT_BRIGHTNESS_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-
-                case LISTENER_SET_COLOR_CODE:                               // set display RGB Colors
-                {
-                    if (noBytes == 4 || noBytes == 5)
-                    {
-                        DSP_COLORS rgb;
-
-                        rgb.red     = udp_server_packet_buffer[1];
-                        rgb.green   = udp_server_packet_buffer[2];
-                        rgb.blue    = udp_server_packet_buffer[3];
-
-                        if (noBytes == 5)
-                        {
-                            rgb.white = udp_server_packet_buffer[4];
-                            set_dsp_color_var (DISPLAY_DSP_COLOR_VAR, &rgb, 1);
-                        }
-                        else
-                        {
-                            rgb.white = 0;
-                            set_dsp_color_var (DISPLAY_DSP_COLOR_VAR, &rgb, 0);
-                        }
-                    }
-                    break;
-                }
-
-                case LISTENER_SET_AMBILIGHT_COLOR_CODE:                     // set ambilight RGB Colors
-                {
-                    if (noBytes == 4 || noBytes == 5)
-                    {
-                        DSP_COLORS rgb;
-                        rgb.red     = udp_server_packet_buffer[1];
-                        rgb.green   = udp_server_packet_buffer[2];
-                        rgb.blue    = udp_server_packet_buffer[3];
-    
-                        if (noBytes == 5)
-                        {
-                            rgb.white = udp_server_packet_buffer[4];
-                            set_dsp_color_var (AMBILIGHT_DSP_COLOR_VAR, &rgb, 1);
-                        }
-                        else
-                        {
-                            rgb.white = 0;
-                            set_dsp_color_var (AMBILIGHT_DSP_COLOR_VAR, &rgb, 0);
-                        }
                     }
                     break;
                 }
@@ -201,15 +113,6 @@ udp_server_loop (void)
                     break;
                 }
 
-                case LISTENER_SET_AUTOMATIC_BRIHGHTNESS_CODE:               // automatic Brightness control per LDR
-                {
-                    if (noBytes == 2)
-                    {
-                        set_numvar (DISPLAY_AUTOMATIC_BRIGHTNESS_ACTIVE_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-
                 case LISTENER_SET_DISPLAY_FLAGS_CODE:                       // set display flags
                 {
                     if (noBytes == 2)
@@ -224,15 +127,6 @@ udp_server_loop (void)
                     if (noBytes == 2)
                     {
                         set_numvar (DISPLAY_POWER_NUM_VAR, udp_server_packet_buffer[1]);
-                    }
-                    break;
-                }
-
-                case LISTENER_DISPLAY_TEMPERATURE_CODE:                     // temperature
-                {
-                    if (noBytes == 1)
-                    {
-                        rpc (DISPLAY_TEMPERATURE_RPC_VAR);
                     }
                     break;
                 }
