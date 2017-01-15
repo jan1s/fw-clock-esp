@@ -1,4 +1,4 @@
-# fw-clock-esp
+# fw-clock-esp (WORK IN PROGRESS)
 Firmware for the ESP8266 WiFi Adapter for the Clock Projects
 
 # LICENSE
