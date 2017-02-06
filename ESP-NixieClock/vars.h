@@ -120,17 +120,18 @@ extern unsigned int     set_strvar (STR_VARIABLE, char *);
  * tm variables:
  *-------------------------------------------------------------------------------------------------------------------------------------------
  */
-typedef struct tm TM;
+//typedef struct tm TM;
+extern tm               tmvar;
 
-typedef enum
-{
-    CURRENT_TM_VAR,
-    MAX_TM_VARIABLES                                       // must be the last member
-} TM_VARIABLE;
+//typedef enum
+//{
+//    CURRENT_TM_VAR,
+//    MAX_TM_VARIABLES                                       // must be the last member
+//} TM_VARIABLE;
 
-extern TM               tmvars[MAX_TM_VARIABLES];
-extern TM *             get_tm_var (TM_VARIABLE);
-extern unsigned int     set_tm_var (TM_VARIABLE, TM *);
+//extern TM               tmvars[MAX_TM_VARIABLES];
+//extern TM *             get_tm_var (TM_VARIABLE);
+//extern unsigned int     set_tm_var (TM_VARIABLE, TM *);
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------
  * display mode variables:

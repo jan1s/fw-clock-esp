@@ -2,6 +2,7 @@
  * ntp.cpp - NTP functions
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,7 +12,9 @@
  */
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <ctime>
 #include "ntp.h"
+#include "vars.h"
 #include "base.h"
 
 const int       NTP_PACKET_SIZE = 48;                                       // NTP time stamp is in the first 48 bytes of the message
@@ -19,6 +22,8 @@ byte            ntp_packet_buffer[NTP_PACKET_SIZE];                         // b
 
 WiFiUDP         ntp_udp;
 unsigned int    ntp_local_port = 2421;
+
+tm tmvar;
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
  * setup ntp
@@ -79,8 +84,18 @@ ntp_poll_time (void)
             unsigned long lo = word(ntp_packet_buffer[42], ntp_packet_buffer[43]);
             unsigned long secsSince1900 = hi << 16 | lo;
 
-            Serial.print ("TIME ");
-            Serial.println(secsSince1900);
+            uint32_t secsSince1970 = secsSince1900 - 2208988800ULL;
+            time_t epoch = secsSince1970;
+            tm *t = localtime(&epoch);
+            memcpy (&tmvar, t, sizeof (tm));
+
+            ntp_success = true;
+
+            Serial.print ("\r\n");
+            Serial.printf ("rtc_write %u %u %u %u %u %u\r\n", (unsigned int) t->tm_year + 1900, (unsigned int) t->tm_mon + 1, (unsigned int) t->tm_mday, (unsigned int) t->tm_hour, (unsigned int) t->tm_min, (unsigned int) t->tm_sec);
+            Serial.flush();
+
+            digitalWrite(5, HIGH);
         }
         else
         {
@@ -98,9 +113,6 @@ ntp_poll_time (void)
 void
 ntp_get_time (IPAddress timeserver)
 {
-    Serial.println("OK time");
-    Serial.flush ();
-
     send_ntp_packet (timeserver);
 }
 

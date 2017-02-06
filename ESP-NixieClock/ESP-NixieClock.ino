@@ -60,8 +60,13 @@
 #include "vars.h"
 #include "version.h"
 
+extern "C" {
+#include "user_interface.h"
+}
 
 #define CMD_BUFFER_SIZE     128                                             // maximum size of command buffer
+
+bool ntp_success;
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
  * global setup
@@ -75,12 +80,13 @@ setup()
     Serial.println ("");
     Serial.flush ();
     delay(1000);
+
+    ntp_success = false;
+
+    pinMode(4, OUTPUT);    
   
     ntp_setup ();
     udp_server_setup ();
-    //Serial.print ("FIRMWARE ");
-    //Serial.println (ESP_VERSION);
-    Serial.flush ();
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
@@ -98,6 +104,30 @@ loop()
     http_server_loop ();
     udp_server_loop ();
     ntp_poll_time ();                                                       // poll NTP
+
+    static uint32_t last_ntp_update = 0;
+    uint32_t esp_rtc = system_get_time() / 1000000;
+    if (!ntp_success)
+    {
+        if (wifi_connected() && esp_rtc - last_ntp_update > 1)             // auto poll NTP
+        {
+            digitalWrite(4, HIGH);
+            ntp_get_time ();
+            last_ntp_update = esp_rtc;
+            digitalWrite(4, LOW);
+        }
+    }
+    else
+    {
+        if (wifi_connected() && esp_rtc - last_ntp_update > 600)           // auto poll NTP
+        {
+            digitalWrite(4, HIGH);
+            ntp_get_time ();
+            last_ntp_update = esp_rtc;
+            digitalWrite(4, LOW);
+        }
+    }
+    
 
     while (Serial.available())
     {

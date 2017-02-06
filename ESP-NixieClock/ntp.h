@@ -2,6 +2,7 @@
  * ntp.h - declarations of public NTP functions
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,5 +17,7 @@ extern void     ntp_poll_time (void);
 extern void     ntp_get_time (IPAddress);
 extern void     ntp_get_time (char *);
 extern void     ntp_get_time (void);
+
+extern bool     ntp_success;
 
 #endif

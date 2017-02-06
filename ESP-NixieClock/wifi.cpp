@@ -2,6 +2,7 @@
  * wifi.cpp - WIFI stuff
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -177,6 +178,20 @@ wifi_check_if_started (void)
                 }
             }
         }
+    }
+}
+
+bool
+wifi_connected (void)
+{
+    int status = WiFi.status();
+    if (status == WL_CONNECTED)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

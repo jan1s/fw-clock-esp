@@ -819,32 +819,25 @@ http_main (void)
     struct tm *     tmp;
     uint_fast8_t    eeprom_is_up;
 
-//    tmp = get_tm_var (CURRENT_TM_VAR);
-//
-//    if (tmp->tm_year >= 0 && tmp->tm_mon >= 0 && tmp->tm_mday >= 0 && tmp->tm_hour >= 0 && tmp->tm_min >= 0 &&
-//        tmp->tm_year <= 1200 && tmp->tm_mon <= 12 && tmp->tm_mday <= 31 && tmp->tm_hour < 24 && tmp->tm_min < 60)
-//    {                                                               // check values to avoid buffer overflow
-//        sprintf (year_str,      "%4d",  tmp->tm_year + 1900);
-//        sprintf (mon_str,       "%02d", tmp->tm_mon + 1);
-//        sprintf (day_str,       "%02d", tmp->tm_mday);
-//        sprintf (hour_str,      "%02d", tmp->tm_hour);
-//        sprintf (minutes_str,   "%02d", tmp->tm_min);
-//    }
-//    else
-//    {
-//        year_str[0]     = '\0';
-//        mon_str[0]      = '\0';
-//        day_str[0]      = '\0';
-//        hour_str[0]     = '\0';
-//        minutes_str[0]  = '\0';
-//    }
-
-    sprintf (datetime_year_str,         "%4d", 1900);
-    sprintf (datetime_mon_str,          "%02d",   1);
-    sprintf (datetime_day_str,          "%02d",   1);
-    sprintf (datetime_hour_str,         "%02d",   0);
-    sprintf (datetime_minutes_str,      "%02d",   0);
-    sprintf (datetime_seconds_str,      "%02d",   0);
+    if (tmvar.tm_year >= 0 && tmvar.tm_mon >= 0 && tmvar.tm_mday >= 0 && tmvar.tm_hour >= 0 && tmvar.tm_min >= 0 &&
+        tmvar.tm_year <= 1200 && tmvar.tm_mon <= 12 && tmvar.tm_mday <= 31 && tmvar.tm_hour < 24 && tmvar.tm_min < 60)
+    {                                                               // check values to avoid buffer overflow
+        sprintf (datetime_year_str,      "%4d",  tmvar.tm_year + 1900);
+        sprintf (datetime_mon_str,       "%02d", tmvar.tm_mon + 1);
+        sprintf (datetime_day_str,       "%02d", tmvar.tm_mday);
+        sprintf (datetime_hour_str,      "%02d", tmvar.tm_hour);
+        sprintf (datetime_minutes_str,   "%02d", tmvar.tm_min);
+        sprintf (datetime_seconds_str,   "%02d", tmvar.tm_sec);
+    }
+    else
+    {
+        sprintf (datetime_year_str,         "%4d", 1900);
+        sprintf (datetime_mon_str,          "%02d",   1);
+        sprintf (datetime_day_str,          "%02d",   1);
+        sprintf (datetime_hour_str,         "%02d",   0);
+        sprintf (datetime_minutes_str,      "%02d",   0);
+        sprintf (datetime_seconds_str,      "%02d",   0);
+    }
 
     sprintf (tzstd_offset_str,          "%4d",   60);
     sprintf (tzstd_hour_str,            "%02d",   1);

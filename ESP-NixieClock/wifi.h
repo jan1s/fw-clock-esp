@@ -2,6 +2,7 @@
  * wifi.h - extern declarations for WIFI stuff
  *
  * Copyright (c) 2016 Frank Meyer - frank(at)fli4l.de
+ *              modified by jan1s - jan1s.coding@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,5 +23,6 @@ extern char     wifi_ip_address[WIFI_MAX_IP_ADDRESS_LEN + 1];
 extern int      wifi_connect(char *, char *);
 extern void     wifi_ap (const char *, const char *);
 extern void     wifi_check_if_started (void);
+extern bool     wifi_connected (void);
 
 #endif

@@ -190,37 +190,37 @@ set_strvar (STR_VARIABLE var, char * p)
     return rtc;
 }
 
-TM tmvars[MAX_TM_VARIABLES];
+//TM tmvars[MAX_TM_VARIABLES];
 
-TM *
-get_tm_var (TM_VARIABLE var)
-{
-    TM *   rtc = (TM *) 0;
-
-    if (var < MAX_TM_VARIABLES)
-    {
-        rtc = &(tmvars[var]);
-    }
-
-    return rtc;
-
-}
-
-unsigned int
-set_tm_var (TM_VARIABLE var, TM * tm)
-{
-    unsigned int   rtc = 0;
-
-    if (var < MAX_TM_VARIABLES)
-    {
-        memcpy (&tmvars[var], tm, sizeof (TM));
-        Serial.printf ("CMD T%02x%04d%02d%02d%02d%02d%02d\r\n", (int) var, tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-        Serial.flush ();
-        rtc =  1;
-    }
-
-    return rtc;
-}
+//TM *
+//get_tm_var (TM_VARIABLE var)
+//{
+//    TM *   rtc = (TM *) 0;
+//
+//    if (var < MAX_TM_VARIABLES)
+//    {
+//        rtc = &(tmvars[var]);
+//    }
+//
+//    return rtc;
+//
+//}
+//
+//unsigned int
+//set_tm_var (TM_VARIABLE var, TM * tm)
+//{
+//    unsigned int   rtc = 0;
+//
+//    if (var < MAX_TM_VARIABLES)
+//    {
+//        memcpy (&tmvars[var], tm, sizeof (TM));
+//        Serial.printf ("CMD T%02x%04d%02d%02d%02d%02d%02d\r\n", (int) var, tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+//        Serial.flush ();
+//        rtc =  1;
+//    }
+//
+//    return rtc;
+//}
 
 DISPLAY_MODE displaymodevars[MAX_DISPLAY_MODE_VARIABLES];
 
@@ -312,25 +312,25 @@ var_set_parameter (char * parameters)
             var_idx = htoi (parameters, 2);
             parameters += 2;
 
-            if (var_idx < MAX_TM_VARIABLES)
-            {
-                tmvars[var_idx].tm_year = 1000 * (parameters[0]  - '0') +
-                                           100 * (parameters[1]  - '0') +
-                                            10 * (parameters[2]  - '0') +
-                                             1 * (parameters[3]  - '0');
-                tmvars[var_idx].tm_mon  =   10 * (parameters[4]  - '0') +
-                                             1 * (parameters[5]  - '0');
-                tmvars[var_idx].tm_mday =   10 * (parameters[6]  - '0') +
-                                             1 * (parameters[7]  - '0');
-                tmvars[var_idx].tm_hour =   10 * (parameters[8]  - '0') +
-                                             1 * (parameters[9]  - '0');
-                tmvars[var_idx].tm_min  =   10 * (parameters[10] - '0') +
-                                             1 * (parameters[11] - '0');
-                tmvars[var_idx].tm_sec =    10 * (parameters[12] - '0') +
-                                             1 * (parameters[13] - '0');
-
-                tmvars[var_idx].tm_wday = dayofweek (tmvars[var_idx].tm_mday, tmvars[var_idx].tm_mon + 1, tmvars[var_idx].tm_year + 1900);
-            }
+//            if (var_idx < MAX_TM_VARIABLES)
+//            {
+//                tmvars[var_idx].tm_year = 1000 * (parameters[0]  - '0') +
+//                                           100 * (parameters[1]  - '0') +
+//                                            10 * (parameters[2]  - '0') +
+//                                             1 * (parameters[3]  - '0');
+//                tmvars[var_idx].tm_mon  =   10 * (parameters[4]  - '0') +
+//                                             1 * (parameters[5]  - '0');
+//                tmvars[var_idx].tm_mday =   10 * (parameters[6]  - '0') +
+//                                             1 * (parameters[7]  - '0');
+//                tmvars[var_idx].tm_hour =   10 * (parameters[8]  - '0') +
+//                                             1 * (parameters[9]  - '0');
+//                tmvars[var_idx].tm_min  =   10 * (parameters[10] - '0') +
+//                                             1 * (parameters[11] - '0');
+//                tmvars[var_idx].tm_sec =    10 * (parameters[12] - '0') +
+//                                             1 * (parameters[13] - '0');
+//
+//                tmvars[var_idx].tm_wday = dayofweek (tmvars[var_idx].tm_mday, tmvars[var_idx].tm_mon + 1, tmvars[var_idx].tm_year + 1900);
+//            }
 
             break;
         }

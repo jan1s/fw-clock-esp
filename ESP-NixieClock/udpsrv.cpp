@@ -12,6 +12,7 @@
  */
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <time.h>
 #include "udpsrv.h"
 #include "vars.h"
 
@@ -99,16 +100,16 @@ udp_server_loop (void)
                 {
                     if (noBytes == 7)
                     {
-                        TM tm;
+                        tm t;
 
-                        tm.tm_year  = udp_server_packet_buffer[1] + 100;           // tm: year since 1900  | UDP packet buffer: year since 2000
-                        tm.tm_mon   = udp_server_packet_buffer[2] - 1;             // tm: month 0..11      | UDP packet buffer: month 1..12
-                        tm.tm_mday  = udp_server_packet_buffer[3];                 // tm: day 1..31        | UDP packet buffer: day 1..31
-                        tm.tm_hour  = udp_server_packet_buffer[4];                 // tm: hour 1..24       | UDP packet buffer: hour 1..31
-                        tm.tm_min   = udp_server_packet_buffer[5];                 // tm: minute 1..59     | UDP packet buffer: minute 1..31
-                        tm.tm_sec   = udp_server_packet_buffer[6];                 // tm: sec 1..59        | UDP packet buffer: sec 1..59
+                        t.tm_year  = udp_server_packet_buffer[1] + 100;           // tm: year since 1900  | UDP packet buffer: year since 2000
+                        t.tm_mon   = udp_server_packet_buffer[2] - 1;             // tm: month 0..11      | UDP packet buffer: month 1..12
+                        t.tm_mday  = udp_server_packet_buffer[3];                 // tm: day 1..31        | UDP packet buffer: day 1..31
+                        t.tm_hour  = udp_server_packet_buffer[4];                 // tm: hour 1..24       | UDP packet buffer: hour 1..31
+                        t.tm_min   = udp_server_packet_buffer[5];                 // tm: minute 1..59     | UDP packet buffer: minute 1..31
+                        t.tm_sec   = udp_server_packet_buffer[6];                 // tm: sec 1..59        | UDP packet buffer: sec 1..59
 
-                        set_tm_var (CURRENT_TM_VAR, &tm);
+                        //set_tm_var (CURRENT_TM_VAR, &tm);
                     }
                     break;
                 }
