@@ -78,8 +78,8 @@ setup()
   
     ntp_setup ();
     udp_server_setup ();
-    Serial.print ("FIRMWARE ");
-    Serial.println (ESP_VERSION);
+    //Serial.print ("FIRMWARE ");
+    //Serial.println (ESP_VERSION);
     Serial.flush ();
 }
 
@@ -142,7 +142,7 @@ loop()
 
                 if (! syntax_ok)
                 {
-                    Serial.println ("ERROR syntax error");
+                    Serial.print ("ERROR syntax error");
                     Serial.flush ();
                 }
             }
@@ -182,7 +182,7 @@ loop()
 
                 if (! syntax_ok)
                 {
-                    Serial.println ("ERROR syntax error");
+                    Serial.print ("ERROR syntax error");
                     Serial.flush ();
                 }
             }
@@ -221,13 +221,13 @@ loop()
 
                 if (! syntax_ok)
                 {
-                    Serial.println ("ERROR syntax error");
+                    Serial.print ("ERROR syntax error");
                     Serial.flush ();
                 }
             }
             else
             {
-                Serial.println ("ERROR invalid command");
+                Serial.print ("ERROR invalid command");
                 Serial.flush ();
             }
 

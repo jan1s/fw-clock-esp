@@ -255,8 +255,10 @@ http_header (const char * title)
     http_send (title);
     http_send ("</title>\r\n");
     http_send ("<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\" integrity=\"sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u\" crossorigin=\"anonymous\">");
+    http_send ("<style>body{padding: 40px 0 0 0;}</style>");
     http_send ("</head>\r\n");
     http_send ("<body>\r\n");
+    http_send ("<div class=\"container\">");
     //http_send ("<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js\"></script>");
     http_send ("<H1>\r\n");
     http_send (title);
@@ -270,6 +272,7 @@ http_header (const char * title)
 static void
 http_trailer (void)
 {
+    http_send ("</div>\r\n");
     http_send ("</body>\r\n");
     http_send ("</html>\r\n");
 }
@@ -283,7 +286,8 @@ table_header (const char ** columns, int cols)
 {
     int i;
 
-    http_send ("<table border=0>\r\n");
+    http_send ("<table border=0 class=\"table\">\r\n");
+    http_send ("<thead>\r\n");
     http_send ("<tr>\r\n");
 
     for (i = 0; i < cols; i++)
@@ -294,6 +298,8 @@ table_header (const char ** columns, int cols)
     }
 
     http_send ("</tr>\r\n");
+    http_send ("</thead>\r\n");
+    http_send ("<tbody>\r\n");
     bgcolor_cnt = 0;
 }
 
@@ -723,6 +729,7 @@ table_row_sliders (const char * page, const char * text1, const char * id, int n
 static void
 table_trailer (void)
 {
+    http_send ("</tbody>\r\n");
     http_send ("</table><P>\r\n");
 }
 
@@ -1103,30 +1110,30 @@ http_display (void)
         else if (! strcmp (action, "testdisplay"))
         {
             message = "Testing display...";
-            rpc (TEST_DISPLAY_RPC_VAR);
+            cmd_nixie_testdisplay ();
         }
-        else if (! strcmp (action, "poweron"))
-        {
-            message = "Switching power on...";
-            set_numvar (DISPLAY_POWER_NUM_VAR, 1);
-        }
-        else if (! strcmp (action, "poweroff"))
-        {
-            message = "Switching power off...";
-            set_numvar (DISPLAY_POWER_NUM_VAR, 0);
-        }
+        // else if (! strcmp (action, "poweron"))
+        // {
+        //     message = "Switching power on...";
+        //     set_numvar (DISPLAY_POWER_NUM_VAR, 1);
+        // }
+        // else if (! strcmp (action, "poweroff"))
+        // {
+        //     message = "Switching power off...";
+        //     set_numvar (DISPLAY_POWER_NUM_VAR, 0);
+        // }
     }
 
     http_header ("NixieClock Display");
     http_menu ();
     table_header (header_cols, DISPLAY_HEADER_COLS);
     table_row_select (thispage, "Display Mode", "displaymode", display_mode_names, display_mode, max_display_modes);
-    table_row_select (thispage, "Display Typee", "displaytype", display_type_names, display_type, max_display_types);
+    table_row_select (thispage, "Display Type", "displaytype", display_type_names, display_type, max_display_types);
     table_trailer ();
 
     begin_form (thispage);
-    button_field ("poweron", "Power On");
-    button_field ("poweroff", "Power Off");
+    //button_field ("poweron", "Power On");
+    //button_field ("poweroff", "Power Off");
     button_field ("testdisplay", "Test display");
     end_form ();
 

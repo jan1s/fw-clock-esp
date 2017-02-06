@@ -170,6 +170,7 @@ extern uint8_t cmd_rtc_write (uint16_t yr, uint8_t mon, uint8_t day, uint8_t hr,
 extern uint8_t cmd_tz_write (bool std, uint16_t offset, uint8_t hour, uint8_t dow, uint8_t week, uint8_t month);
 extern uint8_t cmd_nixie_setmode (uint8_t var);
 extern uint8_t cmd_nixie_settype (uint8_t var);
+extern uint8_t cmd_nixie_testdisplay ();
 
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------

@@ -43,7 +43,7 @@ uint8_t cmd_nixie_setmode (uint8_t var)
 
     if (var < MAX_DISPLAY_MODE_VARIABLES)
     {
-        Serial.printf ("cmd_nixie_set_mode %02x\r\n", (int) var);
+        Serial.printf ("nixie_set_mode %02x\r\n", (int) var);
         Serial.flush ();
         rtc =  1;
     }
@@ -57,7 +57,7 @@ uint8_t cmd_nixie_settype (uint8_t var)
 
     if (var < MAX_DISPLAY_TYPE_VARIABLES)
     {
-        Serial.printf ("cmd_nixie_set_type %02x\r\n", (int) var);
+        Serial.printf ("nixie_set_type %02x\r\n", (int) var);
         Serial.flush ();
         rtc =  1;
     }
@@ -74,6 +74,16 @@ DISPLAY_MODE * get_display_mode_var (DISPLAY_MODE_VARIABLE var)
         rtc = &(displaymodevars[var]);
     }
 
+    return rtc;
+}
+
+
+uint8_t cmd_nixie_testdisplay ()
+{
+    Serial.printf ("nixie_test\r\n");
+    Serial.flush ();
+
+    unsigned int   rtc = 1;
     return rtc;
 }
 
