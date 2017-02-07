@@ -121,6 +121,7 @@ loop()
     {
         if (wifi_connected() && esp_rtc - last_ntp_update > 600)           // auto poll NTP
         {
+            ntp_success = false;
             digitalWrite(4, HIGH);
             ntp_get_time ();
             last_ntp_update = esp_rtc;
