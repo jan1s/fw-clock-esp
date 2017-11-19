@@ -66,7 +66,25 @@ extern "C" {
 
 #define CMD_BUFFER_SIZE     128                                             // maximum size of command buffer
 
-bool ntp_success;
+bool     ntp_success;
+uint64_t ntp_last_update;
+
+uint32_t systime_overflows;
+uint32_t systime_microseconds_tmp;
+uint64_t systime_microseconds;
+
+void time_loop()
+{
+  uint32_t esp_microseconds = system_get_time();
+
+  // catch overflow
+  if (systime_microseconds_tmp > esp_microseconds)
+  {
+    systime_overflows++;
+  }
+  
+  systime_microseconds = (uint64_t)esp_microseconds + (uint64_t)0xffffffff * (uint64_t)systime_overflows;
+}
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
  * global setup
@@ -81,11 +99,17 @@ setup()
     Serial.flush ();
     delay(1000);
 
+    ntp_setup ();
     ntp_success = false;
 
-    pinMode(4, OUTPUT);    
+    systime_overflows = 0;
+    systime_microseconds = 0;
+    systime_microseconds_tmp = 0;
+
+    pinMode(4, OUTPUT);
+    pinMode(5, OUTPUT);
   
-    ntp_setup ();
+    
     udp_server_setup ();
 }
 
@@ -105,30 +129,18 @@ loop()
     udp_server_loop ();
     ntp_poll_time ();                                                       // poll NTP
 
-    static uint32_t last_ntp_update = 0;
-    uint32_t esp_rtc = system_get_time() / 1000000;
+    time_loop();
+    
     if (!ntp_success)
     {
-        if (wifi_connected() && esp_rtc - last_ntp_update > 1)             // auto poll NTP
+        if (wifi_connected() && systime_microseconds - ntp_last_update > 1000000)             // auto poll NTP
         {
             digitalWrite(4, HIGH);
             ntp_get_time ();
-            last_ntp_update = esp_rtc;
+            ntp_last_update = systime_microseconds;
             digitalWrite(4, LOW);
         }
     }
-    else
-    {
-        if (wifi_connected() && esp_rtc - last_ntp_update > 600)           // auto poll NTP
-        {
-            ntp_success = false;
-            digitalWrite(4, HIGH);
-            ntp_get_time ();
-            last_ntp_update = esp_rtc;
-            digitalWrite(4, LOW);
-        }
-    }
-    
 
     while (Serial.available())
     {

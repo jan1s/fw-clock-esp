@@ -76,10 +76,10 @@ ntp_poll_time (void)
         
     if (packetsize)
     {
-        ntp_udp.read(ntp_packet_buffer, packetsize);                   // read packet
-
         if (packetsize == NTP_PACKET_SIZE)
         {
+            ntp_udp.read(ntp_packet_buffer, packetsize);
+            
             unsigned long hi = word(ntp_packet_buffer[40], ntp_packet_buffer[41]);
             unsigned long lo = word(ntp_packet_buffer[42], ntp_packet_buffer[43]);
             unsigned long secsSince1900 = hi << 16 | lo;
@@ -96,13 +96,20 @@ ntp_poll_time (void)
             Serial.flush();
 
             digitalWrite(5, HIGH);
+
+
+            // Turn it off...
+            delay(10000);
+            ESP.deepSleep(20e6);
         }
         else
         {
-            Serial.println("- wrong packet size");
-        }
+            //Serial.println("- wrong packet size");
+            digitalWrite(5, LOW);
+            ntp_udp.flush();
 
-        Serial.flush ();
+            ntp_success = false;
+        }
     }
 }
 
