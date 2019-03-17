@@ -96,11 +96,6 @@ ntp_poll_time (void)
             Serial.flush();
 
             digitalWrite(5, HIGH);
-
-
-            // Turn it off...
-            delay(10000);
-            ESP.deepSleep(20e6);
         }
         else
         {
@@ -141,4 +136,3 @@ void ntp_get_time (void)
 
     ntp_get_time (timeserver);
 }
-
