@@ -127,17 +127,15 @@ loop()
     
     http_server_loop ();
     udp_server_loop ();
-    ntp_poll_time ();                                                       // poll NTP
-
     time_loop();
 
     if (ntp_success) // if successful turn of after 30s
     {
         if (wifi_connected() && systime_microseconds - ntp_last_update > 30e6)
         {
-            ntp_last_update = systime_microseconds;
             ntp_success = false;
             ESP.deepSleep(3.6e9); // deep-sleep for an hour
+            //ESP.deepSleep(0.12e9); // deep-sleep for two minutes
         }
     }
     else if (!ntp_success) // if not successful yet, retry every 2s
@@ -146,6 +144,8 @@ loop()
         {
             digitalWrite(4, HIGH);
             ntp_get_time ();
+            delay(200);
+            ntp_poll_time ();                                                       // poll NTP
             ntp_last_update = systime_microseconds;
             digitalWrite(4, LOW);
         }

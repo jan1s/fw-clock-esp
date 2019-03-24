@@ -58,6 +58,7 @@ send_ntp_packet (IPAddress& address)
     ntp_packet_buffer[14]  = 49;
     ntp_packet_buffer[15]  = 52;
 
+    ntp_udp.flush();
     ntp_udp.beginPacket(address, 123);
     ntp_udp.write(ntp_packet_buffer, NTP_PACKET_SIZE);
     ntp_udp.endPacket();
@@ -102,7 +103,6 @@ ntp_poll_time (void)
             //Serial.println("- wrong packet size");
             digitalWrite(5, LOW);
             ntp_udp.flush();
-
             ntp_success = false;
         }
     }
