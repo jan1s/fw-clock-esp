@@ -32,11 +32,11 @@ tm tmvar;
 void
 ntp_setup (void)
 {
-    Serial.println("- setup UDP");
+    //Serial.println("- setup UDP");
     ntp_udp.begin(ntp_local_port);
-    Serial.print("- local port: ");
-    Serial.println(ntp_udp.localPort());
-    Serial.flush ();
+    //Serial.print("- local port: ");
+    //Serial.println(ntp_udp.localPort());
+    //Serial.flush ();
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
@@ -89,10 +89,12 @@ ntp_poll_time (void)
             time_t epoch = secsSince1970;
             tm *t = localtime(&epoch);
             memcpy (&tmvar, t, sizeof (tm));
+            ntp_udp.flush();
 
             ntp_success = true;
 
-            Serial.print ("\r\n");
+            Serial.print("\r\n");
+            Serial.flush();
             Serial.printf ("rtc_write %u %u %u %u %u %u\r\n", (unsigned int) t->tm_year + 1900, (unsigned int) t->tm_mon + 1, (unsigned int) t->tm_mday, (unsigned int) t->tm_hour, (unsigned int) t->tm_min, (unsigned int) t->tm_sec);
             Serial.flush();
 

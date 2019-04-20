@@ -95,7 +95,7 @@ setup()
 {
     Serial.begin(115200);
     delay(1);
-    Serial.println ("");
+    Serial.println ("Hello");
     Serial.flush ();
     delay(1000);
 

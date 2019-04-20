@@ -93,9 +93,9 @@ wifi_connect(char * ssid, char * key)
         wifi_ap_mode = false;
         set_local_ip_address ();
 
-		statusmsg ("AP", wifi_ssid);
-        statusmsg ("MODE", "client");
-        statusmsg ("IPADDRESS", wifi_ip_address);
+		    //statusmsg ("AP", wifi_ssid);
+        //statusmsg ("MODE", "client");
+        //statusmsg ("IPADDRESS", wifi_ip_address);
 
         wifi_started = true;
     }
@@ -152,10 +152,10 @@ wifi_check_if_started (void)
                 set_ssid ();
                 set_local_ip_address ();
 
-                debugmsg ("connected to AP");
-				statusmsg ("AP", wifi_ssid);
-                statusmsg ("MODE", "client");
-                statusmsg ("IPADDRESS", wifi_ip_address);
+                //debugmsg ("connected to AP");
+				        //statusmsg ("AP", wifi_ssid);
+                //statusmsg ("MODE", "client");
+                //statusmsg ("IPADDRESS", wifi_ip_address);
     
                 wifi_started = true;
                 http_server_begin ();
@@ -194,4 +194,3 @@ wifi_connected (void)
         return false;
     }
 }
-

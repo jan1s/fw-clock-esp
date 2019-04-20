@@ -49,11 +49,11 @@ static unsigned int    server_udp_local_port = 2424;
 void
 udp_server_setup (void)
 {
-    Serial.println("- setup server UDP");
+    //Serial.println("- setup server UDP");
     server_udp.begin(server_udp_local_port);
-    Serial.print("- local port: ");
-    Serial.println(server_udp.localPort());
-    Serial.flush ();
+    //Serial.print("- local port: ");
+    //Serial.println(server_udp.localPort());
+    //Serial.flush ();
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------------------
@@ -159,4 +159,3 @@ udp_server_loop (void)
         Serial.flush ();
     }
 }
-
