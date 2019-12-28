@@ -34,7 +34,7 @@ void setup()
 
   WiFiManager wifiManager;
   wifiManager.setAPCallback(configModeCallback);
-  if (!wifiManager.autoConnect("AutoConnectAP", "password")) 
+  if (!wifiManager.autoConnect("AutoConnectAP", "defaultPW")) 
   {
     ESP.reset();
     delay(1000);
