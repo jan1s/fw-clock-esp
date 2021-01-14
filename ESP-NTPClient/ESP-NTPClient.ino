@@ -32,7 +32,10 @@ void setup()
 {
   Serial.begin(115200);
 
+  //WiFi.setOutputPower(4); // limit transmission power to 4dBm to reduce power consumption and range
+
   WiFiManager wifiManager;
+  wifiManager.setConfigPortalTimeout(600);
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect("AutoConnectAP", "defaultPW")) 
   {
